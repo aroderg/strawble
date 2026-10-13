@@ -69,6 +69,7 @@ const attemptsDisplay = document.getElementById('attempts-left');
 const MAX_GUESSES = 6;
 let guessCount = 0;
 let isGameOver = false;
+let guessHistory = []; // Tracks states for the shareable summary
 
 // Listen for changes on the Chapter dropdown
 chapterSelect.addEventListener('change', function () {
@@ -156,6 +157,13 @@ submitBtn.addEventListener('click', function () {
     const checkpointResult = evaluateValue(guessedCheckpoint, target.checkpoint);
     const berryResult = evaluateValue(guessedBerry, target.berry);
 
+    // Track for shareable results
+    guessHistory.push({
+        chapterState: chapterResult.state,
+        cpState: checkpointResult.state,
+        berryState: berryResult.state
+    });
+
     renderGuessRow({
         chapterText: `#${guessedChapter}`,
         chapterState: chapterResult.state,
@@ -238,6 +246,46 @@ function endGame(won) {
     message.textContent = won ? '🎉 You found the strawberry!' : `❌ Game Over! Target was Ch. ${target.chapter}, Checkpoint ${target.checkpoint}, Berry #${target.berry}.`;
 
     document.querySelector('.container').appendChild(message);
+
+    // --- SHARE BUTTON ---
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'retro-btn share-btn';
+    shareBtn.textContent = 'SHARE RESULTS';
+    shareBtn.style.marginTop = '10px';
+
+    shareBtn.addEventListener('click', () => {
+        const shareText = generateShareText(won);
+        navigator.clipboard.writeText(shareText).then(() => {
+            shareBtn.textContent = 'COPIED TO CLIPBOARD!';
+            setTimeout(() => {
+                shareBtn.textContent = 'SHARE RESULTS';
+            }, 2000);
+        });
+    });
+
+    document.querySelector('.container').appendChild(shareBtn);
+}
+
+// --- SHARE TEXT GENERATOR ---
+function generateShareText(won) {
+    const score = won ? guessCount : 'X';
+    let text = `Strawble ${score}/${MAX_GUESSES}\n\n`;
+
+    guessHistory.forEach(guess => {
+        const cEmoji = emojiForState(guess.chapterState);
+        const cpEmoji = emojiForState(guess.cpState);
+        const bEmoji = emojiForState(guess.berryState);
+        text += `${cEmoji}${cpEmoji}${bEmoji}\n`;
+    });
+
+    return text.trim();
+}
+
+function emojiForState(state) {
+    if (state === 'correct') return '🟩';
+    if (state === 'higher') return '⬆️';
+    if (state === 'lower') return '⬇️';
+    return '⬛';
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
