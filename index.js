@@ -71,6 +71,9 @@ let guessCount = 0;
 let isGameOver = false;
 let guessHistory = []; // Tracks states for the shareable summary
 
+// Get Today's Date String for Storage Keying
+const getTodayString = () => new Date().toISOString().split('T')[0];
+
 // Listen for changes on the Chapter dropdown
 chapterSelect.addEventListener('change', function () {
     const selectedChapter = this.value;
@@ -89,9 +92,7 @@ chapterSelect.addEventListener('change', function () {
     checkpoints.forEach((cp, index) => {
         const option = document.createElement('option');
         option.value = index;
-
         option.textContent = `${index} - ${cp.name}`;
-
         checkpointSelect.appendChild(option);
     });
 
@@ -104,7 +105,6 @@ chapterSelect.addEventListener('change', function () {
     defaultBerryOption.textContent = totalBerries > 0 ? 'Select Strawberry #' : 'No strawberries in this chapter!';
     berrySelect.appendChild(defaultBerryOption);
 
-    // Allow choosing any index from 0 to n-1 across the entire chapter
     for (let i = 0; i < totalBerries; i++) {
         const option = document.createElement('option');
         option.value = i;
@@ -115,7 +115,7 @@ chapterSelect.addEventListener('change', function () {
 
 // --- DAILY TARGET GENERATOR ---
 function getDailyTarget() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayString();
     let hash = 0;
     for (let i = 0; i < today.length; i++) {
         hash = today.charCodeAt(i) + ((hash << 5) - hash);
@@ -127,7 +127,6 @@ function getDailyTarget() {
     const checkpoints = chapterCheckpoints[chapter];
     const cpIdx = Math.abs(Math.floor(hash / 10)) % checkpoints.length;
 
-    // Pick a random strawberry index strictly within that checkpoint's official range
     const cp = checkpoints[cpIdx];
     const berryNum = cp.minBerry + (Math.abs(Math.floor(hash / 100)) % (cp.maxBerry - cp.minBerry + 1));
 
@@ -157,54 +156,105 @@ submitBtn.addEventListener('click', function () {
     const checkpointResult = evaluateValue(guessedCheckpoint, target.checkpoint);
     const berryResult = evaluateValue(guessedBerry, target.berry);
 
-    // Track for shareable results
-    guessHistory.push({
-        chapterState: chapterResult.state,
-        cpState: checkpointResult.state,
-        berryState: berryResult.state
-    });
-
-    renderGuessRow({
+    const guessData = {
         chapterText: `#${guessedChapter}`,
         chapterState: chapterResult.state,
         cpText: `#${guessedCheckpoint}`,
         cpState: checkpointResult.state,
         berryText: `#${guessedBerry}`,
         berryState: berryResult.state
-    });
+    };
 
-    if (chapterResult.state === 'correct' && checkpointResult.state === 'correct' && berryResult.state === 'correct') {
+    guessHistory.push(guessData);
+    renderGuessRow(guessData);
+
+    const won = (chapterResult.state === 'correct' && checkpointResult.state === 'correct' && berryResult.state === 'correct');
+
+    // Save progress to localStorage immediately
+    saveGameState(won);
+
+    if (won) {
         endGame(true);
     } else if (guessCount >= MAX_GUESSES) {
         endGame(false);
     }
 });
 
+// --- PERSISTENCE & LOCKOUT STORAGE ---
+function saveGameState(won) {
+    const today = getTodayString();
+    const gameState = {
+        guessCount,
+        isGameOver,
+        won,
+        guessHistory
+    };
+    localStorage.setItem(`strawble_${today}`, JSON.stringify(gameState));
+}
+
+function updateDayCounter() {
+    const anchorDate = new Date('2026-10-14');
+    const todayStr = getTodayString(); // uses your existing YYYY-MM-DD function
+    const todayDate = new Date(todayStr);
+
+    // Calculate difference in milliseconds and convert to days
+    const diffTime = todayDate - anchorDate;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    const dayCounterElement = document.getElementById('day-counter');
+    if (dayCounterElement) {
+        dayCounterElement.textContent = `Day #${diffDays}`;
+    }
+}
+
+function loadSavedGameState() {
+    const today = getTodayString();
+    const savedData = localStorage.getItem(`strawble_${today}`);
+    if (!savedData) return false;
+
+    try {
+        const state = JSON.parse(savedData);
+        guessCount = state.guessCount;
+        isGameOver = state.isGameOver;
+        guessHistory = state.guessHistory || [];
+
+        attemptsDisplay.textContent = `Guesses: ${guessCount}/${MAX_GUESSES}`;
+
+        // Clear placeholder and render history
+        guessesBoard.innerHTML = '';
+        guessHistory.forEach(guess => renderGuessRow(guess));
+
+        if (isGameOver) {
+            lockdownUI(state.won);
+        }
+        return true;
+    } catch (e) {
+        console.error("Failed to parse saved game state:", e);
+        return false;
+    }
+}
+
 // Must match the salt used in your Python build script!
 const SALT = "aVacqx33IzF/v3Ipl7PoMPjVLzxWB6tAW3Cs6Si092gkqoZd7FWhQ0lGS5WKJCw+H6M=";
 
 async function getBerryImageUrl(chapter, berryIndex) {
-    // Construct the exact same message string (Chapter and Global Berry Index)
     const message = `${chapter}-${berryIndex}-${SALT}`;
-
-    // Encode and hash using the browser's native Web Crypto API
     const msgBuffer = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Return the path to the hashed asset
     return `public/assets/berries/${hashHex.substring(0, 16)}.png`;
 }
 
 function evaluateValue(guess, actual) {
     if (guess === actual) return { state: 'correct' };
-    if (guess < actual) return { state: 'higher' }; // Target is higher
-    return { state: 'lower' }; // Target is lower
+    if (guess < actual) return { state: 'higher' };
+    return { state: 'lower' };
 }
 
 function renderGuessRow(data) {
-    if (guessCount === 1) {
+    if (guessCount === 1 && guessesBoard.querySelector('.tile.empty')) {
         guessesBoard.innerHTML = '';
     }
 
@@ -235,23 +285,39 @@ function getArrow(state) {
 
 function endGame(won) {
     isGameOver = true;
+    saveGameState(won);
+    lockdownUI(won);
+}
+
+function lockdownUI(won) {
     submitBtn.disabled = true;
     submitBtn.style.opacity = '0.5';
+    chapterSelect.disabled = true;
+    checkpointSelect.disabled = true;
+    berrySelect.disabled = true;
+
+    // Prevent duplicate banners if reloading an already ended game
+    if (document.getElementById('endgame-banner')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'endgame-banner';
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.gap = '10px';
+    wrapper.style.width = '100%';
+    wrapper.style.marginTop = '10px';
 
     const message = document.createElement('div');
     message.style.textAlign = 'center';
-    message.style.marginTop = '10px';
     message.style.fontWeight = 'bold';
     message.style.color = won ? '#10b981' : '#ef4444';
     message.textContent = won ? '🎉 You found the strawberry!' : `❌ Game Over! Target was Ch. ${target.chapter}, Checkpoint ${target.checkpoint}, Berry #${target.berry}.`;
+    wrapper.appendChild(message);
 
-    document.querySelector('.container').appendChild(message);
-
-    // --- SHARE BUTTON ---
     const shareBtn = document.createElement('button');
     shareBtn.className = 'retro-btn share-btn';
     shareBtn.textContent = 'SHARE RESULTS';
-    shareBtn.style.marginTop = '10px';
 
     shareBtn.addEventListener('click', () => {
         const shareText = generateShareText(won);
@@ -262,14 +328,22 @@ function endGame(won) {
             }, 2000);
         });
     });
+    wrapper.appendChild(shareBtn);
 
-    document.querySelector('.container').appendChild(shareBtn);
+    document.querySelector('.container').appendChild(wrapper);
 }
 
 // --- SHARE TEXT GENERATOR ---
 function generateShareText(won) {
     const score = won ? guessCount : 'X';
-    let text = `Strawble ${score}/${MAX_GUESSES}\n\n`;
+
+    // Calculate current day number using the same anchor date (2026-10-14 as Day #0)
+    const anchorDate = new Date('2026-10-14');
+    const todayDate = new Date(getTodayString());
+    const diffTime = todayDate - anchorDate;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    let text = `Strawble #${diffDays} ${score}/${MAX_GUESSES}\n\n`;
 
     guessHistory.forEach(guess => {
         const cEmoji = emojiForState(guess.chapterState);
@@ -289,9 +363,11 @@ function emojiForState(state) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // Update the dynamic day number
+    updateDayCounter();
+
     try {
         const imgUrl = await getBerryImageUrl(target.chapter, target.berry);
-
         const imgElement = document.getElementById("daily-berry-img");
         if (imgElement) {
             imgElement.src = imgUrl;
@@ -300,4 +376,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
         console.error("Failed to load daily berry hint image:", err);
     }
+
+    // Load any saved game state for today
+    loadSavedGameState();
 });
