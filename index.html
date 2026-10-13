@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strawble - A Celeste Strawberry Guessing Game</title>
+    <link rel="stylesheet" href="index.css">
+    <!-- Google Fonts for retro/clean aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>STRAWBLE</h1>
+            <p class="subtitle">Guess today's hidden Celeste strawberry location!</p>
+        </header>
+
+        <!-- Stats / Game Status Bar -->
+        <div class="game-info">
+            <span id="day-counter">Day #1</span> | <span id="attempts-left">Guesses: 6/6</span>
+        </div>
+
+        <!-- Daily Strawberry Hint Card -->
+        <div class="daily-hint-card">
+            <h3>Today's Strawberry Hint</h3>
+            <img id="daily-berry-img" class="berry-hint-preview hidden" alt="Daily Berry Hint" />
+            <p class="hint-subtitle">Use the surroundings to guess the Chapter & Checkpoint!</p>
+        </div>
+
+        <!-- Guesses Grid Board -->
+        <main class="board-container">
+            <!-- Table Headers -->
+            <div class="board-header three-cols">
+                <div class="col-header">Chapter</div>
+                <div class="col-header">Checkpoint</div>
+                <div class="col-header">Berry #</div>
+            </div>
+
+            <!-- Guesses Board -->
+            <div id="guesses-board">
+                <div class="guess-row three-cols">
+                    <div class="tile empty">?</div>
+                    <div class="tile empty">?</div>
+                    <div class="tile empty">?</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Control Panel -->
+        <section class="control-panel">
+            <div class="input-group">
+                <label for="chapter-select">Chapter</label>
+                <select id="chapter-select">
+                    <option value="" disabled selected>Select Chapter...</option>
+                    <option value="1">1 - Forsaken City</option>
+                    <option value="2">2 - Old Site</option>
+                    <option value="3">3 - Celestial Resort</option>
+                    <option value="4">4 - Golden Ridge</option>
+                    <option value="5">5 - Mirror Temple</option>
+                    <option value="7">7 - The Summit</option>
+                    <option value="8">8 - Core</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="checkpoint-select">Checkpoint</label>
+                <select id="checkpoint-select">
+                    <option value="" disabled selected>Select Chapter first...</option>
+                </select>
+            </div>
+
+            <div class="input-group full-width">
+                <label for="berry-select">Strawberry # (in chapter)</label>
+                <select id="berry-select">
+                    <option value="" disabled selected>Select Chapter first...</option>
+                </select>
+            </div>
+
+            <button id="submit-btn" class="retro-btn">GUESS</button>
+        </section>
+    </div>
+    <script src="index.js"></script>
+</body>
+
+</html>
