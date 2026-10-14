@@ -246,6 +246,26 @@ async function getBerryImageUrl(chapter, berryIndex) {
     return `public/assets/berries/${hashHex.substring(0, 16)}.png`;
 }
 
+// --- LIGHTBOX INTERACTION ---
+const hintImgElement = document.getElementById("daily-berry-img");
+const lightboxModal = document.getElementById("lightbox-modal");
+const lightboxImg = document.getElementById("lightbox-img");
+
+if (hintImgElement && lightboxModal && lightboxImg) {
+    // Open lightbox on hint image click
+    hintImgElement.addEventListener('click', () => {
+        if (!hintImgElement.classList.contains('hidden') && hintImgElement.src) {
+            lightboxImg.src = hintImgElement.src;
+            lightboxModal.classList.remove('hidden');
+        }
+    });
+
+    // Close lightbox on click anywhere on the overlay
+    lightboxModal.addEventListener('click', () => {
+        lightboxModal.classList.add('hidden');
+    });
+}
+
 function evaluateValue(guess, actual) {
     if (guess === actual) return { state: 'correct' };
     if (guess < actual) return { state: 'higher' };
@@ -362,6 +382,9 @@ function generateShareText(won) {
         const bEmoji = emojiForState(guess.berryState);
         text += `${cEmoji}${cpEmoji}${bEmoji}\n`;
     });
+
+    // Append the dynamic current URL at the bottom
+    text += `\n${window.location.href}`;
 
     return text.trim();
 }
