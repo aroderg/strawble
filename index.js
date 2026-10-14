@@ -134,7 +134,6 @@ function getDailyTarget() {
 }
 
 const target = getDailyTarget();
-console.log("Secret Target (for testing):", target); // Remove in production
 
 // --- GUESS SUBMISSION LOGIC ---
 submitBtn.addEventListener('click', function () {
@@ -315,6 +314,14 @@ function lockdownUI(won) {
     message.textContent = won ? '🎉 You found the strawberry!' : `❌ Game Over! Target was Ch. ${target.chapter}, Checkpoint ${target.checkpoint}, Berry #${target.berry}.`;
     wrapper.appendChild(message);
 
+    // --- COUNTDOWN ELEMENT ---
+    const countdownContainer = document.createElement('div');
+    countdownContainer.style.fontSize = '0.85rem';
+    countdownContainer.style.color = '#94a3b8';
+    countdownContainer.style.marginTop = '2px';
+    countdownContainer.innerHTML = `Next Strawble in: <span id="countdown-timer" style="color: #f8fafc; font-weight: bold;">--:--:--</span>`;
+    wrapper.appendChild(countdownContainer);
+
     const shareBtn = document.createElement('button');
     shareBtn.className = 'retro-btn share-btn';
     shareBtn.textContent = 'SHARE RESULTS';
@@ -331,6 +338,10 @@ function lockdownUI(won) {
     wrapper.appendChild(shareBtn);
 
     document.querySelector('.container').appendChild(wrapper);
+
+    // Start the live countdown loop
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
 }
 
 // --- SHARE TEXT GENERATOR ---
@@ -380,3 +391,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Load any saved game state for today
     loadSavedGameState();
 });
+
+// --- LIVE COUNTDOWN TIMER ---
+function updateCountdown() {
+    const timerEl = document.getElementById('countdown-timer');
+    if (!timerEl) return;
+
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const diff = tomorrow - now;
+
+    if (diff <= 0) {
+        timerEl.textContent = "00:00:00";
+        return;
+    }
+
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
