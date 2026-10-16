@@ -176,7 +176,7 @@ input {
     padding: 10px;
     border-radius: 4px;
     font-family: 'Courier Prime', monospace;
-    font-size: 0.95krem;
+    font-size: 1rem;
     outline: none;
 }
 
@@ -310,4 +310,164 @@ input:focus {
     font-size: 0.75rem;
     color: #64748b;
     text-transform: uppercase;
+}
+
+
+/* Mobile optimization */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 16px 0;
+}
+
+.container {
+    width: 100%;
+    min-width: 0;
+    padding: clamp(12px, 4vw, 20px);
+    gap: clamp(14px, 4vw, 20px);
+}
+
+header h1 {
+    font-size: clamp(1.2rem, 6vw, 1.8rem);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.game-info {
+    max-width: 100%;
+    text-align: center;
+    line-height: 1.6;
+    font-size: 0.8rem;
+}
+
+.board-container,
+.control-panel,
+.daily-hint-card {
+    min-width: 0;
+    padding: clamp(10px, 3vw, 15px);
+}
+
+.board-header,
+.guess-row {
+    gap: 6px;
+}
+
+.board-header {
+    font-size: clamp(0.6rem, 2.5vw, 0.8rem);
+}
+
+.tile {
+    min-width: 0;
+    height: clamp(44px, 12vw, 55px);
+    font-size: clamp(0.8rem, 3.5vw, 1rem);
+}
+
+.control-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.input-group {
+    min-width: 0;
+}
+
+select,
+input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 8px;
+    font-size: 16px;
+}
+
+.retro-btn {
+    min-height: 48px;
+    padding: 14px 8px;
+    font-size: clamp(0.6rem, 2.7vw, 0.75rem);
+    overflow-wrap: anywhere;
+}
+
+.berry-hint-preview {
+    width: 96px;
+    height: 96px;
+    max-width: 100%;
+}
+
+/* Lightbox must fit the available viewport */
+.lightbox-overlay {
+    padding: 16px;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.lightbox-content {
+    width: 100%;
+    max-width: 480px;
+    min-width: 0;
+}
+
+#lightbox-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    max-height: 75svh;
+}
+
+.lightbox-hint {
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+    .container {
+        padding: 10px;
+    }
+
+    .board-container,
+    .control-panel,
+    .daily-hint-card {
+        padding: 10px;
+    }
+
+    .board-header,
+    .guess-row {
+        gap: 4px;
+    }
+
+    .board-header {
+        font-size: 0.58rem;
+        letter-spacing: -0.3px;
+    }
+
+    .tile {
+        font-size: 0.8rem;
+    }
+
+    .input-group label {
+        font-size: 0.68rem;
+    }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }

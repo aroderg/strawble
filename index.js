@@ -421,8 +421,12 @@ function updateCountdown() {
     if (!timerEl) return;
 
     const now = new Date();
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const diff = tomorrow - now;
+    // Get current time in UTC milliseconds
+    const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(), now.getUTCMilliseconds());
+    // Get tomorrow's midnight in UTC milliseconds
+    const tomorrowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+
+    const diff = tomorrowUtc - nowUtc;
 
     if (diff <= 0) {
         timerEl.textContent = "00:00:00";
